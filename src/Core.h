@@ -41,6 +41,9 @@ public:
         }
     }
 
+    int getWidth() const { return m_image.getWidth();}
+    int getHeight() const { return m_image.getHeight();}
+
     void setFlipped(bool flipped) { m_flipped = flipped; }
 
 private:
@@ -100,6 +103,31 @@ public:
     void setBounds(int w, int h);
     void normalize();
     void bounce();
+
+    ofRectangle getBoundingBox() const {
+        if (!m_sprite) return ofRectangle(m_x, m_y, 0, 0);
+        return ofRectangle(m_x, m_y, m_sprite ->getWidth(), m_sprite->getHeight());
+    }
+
+    void bounceFrom(std::shared_ptr<Creature> other) {
+    if (!other) return;
+    float dx = m_x - other->getX();
+    float dy = m_y - other->getY();
+    float length = std::sqrt(dx*dx + dy*dy);
+    if (length == 0) length = 1; 
+    dx /= length;
+    dy /= length;
+
+    m_x += dx * m_speed;
+    m_y += dy * m_speed;
+
+    m_dx = dx;
+    m_dy = dy;
+
+    bounce(); 
+}
+
+    
 };
 
 // GameEvents

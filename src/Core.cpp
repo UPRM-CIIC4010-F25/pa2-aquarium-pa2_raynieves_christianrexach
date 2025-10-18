@@ -13,6 +13,22 @@ void Creature::normalize() {
 
 void Creature::bounce() {
     // should implement boundary controls here
+ if (m_x < 0){
+    m_x = 0;
+    m_dx = -m_dx;
+ } else if (m_x> m_width){
+    m_x = m_width;
+    m_dx = -m_dx;
+ }
+ if (m_y < 0){
+    m_y = 0;
+    m_dy = -m_dy;
+ } else if (m_y> m_height){
+    m_y = m_height;
+    m_dy = -m_dy;
+}
+
+ 
 }
 
 
@@ -48,7 +64,13 @@ void GameEvent::print() const {
 
 // collision detection between two creatures
 bool checkCollision(std::shared_ptr<Creature> a, std::shared_ptr<Creature> b) {
-    return false; 
+   if (!a || !b) return false;
+   
+ ofRectangle rectA = a->getBoundingBox();
+ ofRectangle rectB = b->getBoundingBox();
+
+ return rectA.intersects(rectB);
+
 };
 
 
