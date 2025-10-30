@@ -8,6 +8,15 @@ void ofApp::setup(){
     backgroundImage.load("background.png");
     backgroundImage.resize(ofGetWindowWidth(), ofGetWindowHeight());
 
+    introSound.load("(8-Bit Cover) Astor Piazzolla - Cafe 1930 EDIT INTRO.wav");
+    loopedSound.load("(8-Bit Cover) Astor Piazzolla - Cafe 1930 EDIT LOOP.wav");
+
+    loopedSound.setLoop(true);  // Make the main track loop forever
+    introSound.setLoop(false); // Make sure to only play intro once
+
+    gameMusicHasStarted = false;
+    // introSound.play(); // Start intro music
+    // introIsPlaying = true;
 
     std::shared_ptr<Aquarium> myAquarium;
     std::shared_ptr<PlayerCreature> player;
@@ -61,21 +70,49 @@ void ofApp::update(){
     
     if(gameManager->GetActiveSceneName() == GameSceneKindToString(GameSceneKind::GAME_OVER)){
         return; // Stop updating if game is over or exiting
+        if (gameMusicHasStarted) {
+            introSound.stop();
+            loopedSound.stop();
+            introIsPlaying = false;
+            gameMusicHasStarted = false;
+        }
+        return;
     }
 
     if(gameManager->GetActiveSceneName() == GameSceneKindToString(GameSceneKind::AQUARIUM_GAME)){
+
         auto gameScene = std::static_pointer_cast<AquariumGameScene>(gameManager->GetActiveScene());
+
         if(gameScene->GetLastEvent() != nullptr && gameScene->GetLastEvent()->isGameOver()){
             gameManager->Transition(GameSceneKindToString(GameSceneKind::GAME_OVER));
             return;
         }
         
-    }
-
-    gameManager->UpdateActiveScene();
     
+        //  Start music when entering game scene
+        if (!gameMusicHasStarted) {
+            introSound.play();
+            introIsPlaying = true;
+            gameMusicHasStarted = true;
+        }
 
+        // Transition from intro to loop
+        if (introIsPlaying && !introSound.getIsPlaying()) {
+            loopedSound.play();
+            introIsPlaying = false;
+        }
+    }
+        else {
+            //  Any other scene (intro screen, etc.)
+            if (gameMusicHasStarted) {
+                introSound.stop();
+                loopedSound.stop();
+                introIsPlaying = false;
+                gameMusicHasStarted = false;
+            }
+        }
 
+        gameManager->UpdateActiveScene();   
 }
 
 //--------------------------------------------------------------

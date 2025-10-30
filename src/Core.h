@@ -106,7 +106,7 @@ public:
 
     ofRectangle getBoundingBox() const {
         if (!m_sprite) return ofRectangle(m_x, m_y, 0, 0);
-        return ofRectangle(m_x, m_y, m_sprite ->getWidth(), m_sprite->getHeight());
+        return ofRectangle(m_x, m_y, (m_sprite ->getWidth())*0.50, (m_sprite->getHeight())*0.50);
     }
 
     void bounceFrom(std::shared_ptr<Creature> other) {

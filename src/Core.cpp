@@ -23,8 +23,8 @@ void Creature::bounce() {
  if (m_y < 0){
     m_y = 0;
     m_dy = -m_dy;
- } else if (m_y> m_height){
-    m_y = m_height;
+ } else if (m_y> m_height*0.75){
+    m_y = m_height*0.75;
     m_dy = -m_dy;
 }
 
