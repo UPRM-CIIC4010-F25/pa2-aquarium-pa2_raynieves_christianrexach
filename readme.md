@@ -24,8 +24,8 @@ Grading
 ## Team Info
 | Student Number | Student Name | Student Email |
 |-|-|-|
-|(STUDENT NUMBER HERE)| (STUDENT NAME HERE)| (STUDENT EMAIL HERE) |
-|(STUDENT NUMBER HERE)| (STUDENT NAME HERE)| (STUDENT EMAIL HERE) |
+|(841-23-5391)| (Christian Gabriel Rexach Pazos)| (christian.rexach@upr.edu) |
+|(841-23-####)| (Ray Alexander Nieves Betancourt)| (ray.nieves@upr.edu) |
 
 ---
 
