@@ -151,6 +151,9 @@ class AquariumGameScene : public GameScene {
         string GetName()override {return this->m_name;}
         void Update() override;
         void Draw() override;
+
+        std::vector<glm::vec3> redSquares; // x, y, z (lifetime)
+
     private:
         void paintAquariumHUD();
         std::shared_ptr<PlayerCreature> m_player;

@@ -173,6 +173,26 @@ void Aquarium::update() {
     for (auto& creature : m_creatures) {
         creature->move();
     }
+
+    //NPC Collision//
+
+    for (size_t i = 0; i < m_creatures.size(); ++i) {
+        auto npc1 = m_creatures[i];
+
+        // Skip player
+        if (std::dynamic_pointer_cast<PlayerCreature>(npc1)) continue;
+
+        for (size_t j = i + 1; j < m_creatures.size(); ++j) {
+            auto npc2 = m_creatures[j];
+            if (std::dynamic_pointer_cast<PlayerCreature>(npc2)) continue;
+
+            // Check bounding box intersection to push apart
+            if (npc1->getBoundingBox().intersects(npc2->getBoundingBox())) {
+                npc1->bounceFrom(npc2);
+                npc2->bounceFrom(npc1);
+            }
+        }
+    }
     this->Repopulate();
 }
 
@@ -287,7 +307,18 @@ void AquariumGameScene::Update(){
                 this->m_player->setDirection(-this->m_player->getDx(), -this->m_player->getDy());
                 this->m_player->move();
                 event->creatureB->bounceFrom(this->m_player);
-            } else {
+            } else {   
+
+                float fx = event->creatureB->getX() + event->creatureB->getBoundingBox().getWidth() / 2;
+                float fy = event->creatureB->getY() + event->creatureB->getBoundingBox().getHeight() / 2;
+
+                // spawn small cluster of squares
+                for (int i = 0; i < 6; ++i) {
+                    float offsetX = ofRandom(-8, 8);
+                    float offsetY = ofRandom(-8, 8);
+                    redSquares.push_back(glm::vec3(fx + offsetX, fy + offsetY, 30));
+                }
+
                 this->m_aquarium->removeCreature(event->creatureB);
                 this->m_player->addToScore(1, event->creatureB->getValue());
                 if (this->m_player->getScore() % 25 == 0) {
@@ -296,6 +327,20 @@ void AquariumGameScene::Update(){
             }
         }
         this->m_aquarium->update();
+
+        // Update red square lifetimes
+        for (auto& sq : redSquares) {
+            sq.z -= 1; // reduce lifetime
+            }
+
+        // Remove expired squares
+        redSquares.erase(
+            std::remove_if(redSquares.begin(), redSquares.end(), [](const glm::vec3& sq) {
+                return sq.z <= 0;
+            }),
+
+            redSquares.end()
+        );
     }
 }
 
@@ -304,6 +349,15 @@ void AquariumGameScene::Draw() {
     this->m_aquarium->draw();
     this->paintAquariumHUD();
 
+    ofSetColor(ofColor::red);
+
+    for (const auto& sq : redSquares) {
+        float alpha = ofMap(sq.z, 0, 15, 0, 64, true); // starts at 1/4 opacity and goes to 0 in 15f.
+        ofSetColor(255, 0, 0, alpha);
+        float size = 10.0f;
+        ofDrawRectangle(sq.x - size / 2, sq.y - size / 2, size, size);
+    }
+    ofSetColor(ofColor::white);
 }
 
 
