@@ -9,8 +9,10 @@
 
 enum class AquariumCreatureType {
     NPCreature,
-    BiggerFish,
-    GoldFish  //Added new type of fish
+    BiggerFish, //Added new type of fish
+    GoldFish,
+    GoldFishNPC,
+    LionFish
 };
 
 string AquariumCreatureTypeToString(AquariumCreatureType t);
@@ -68,12 +70,25 @@ public:
     void loseLife(int debounce);
     void increasePower(int value) { m_power += value; }
     void reduceDamageDebounce();
-    
+
     // Goldfish stuff
     void powerUp(std::shared_ptr<GameSprite> goldSprite);
     void updatePowerUp();
     bool isPoweredUp = false;
     int powerUpTimer = 0;
+    float baseSpeed;
+
+    // Lionfish stuff
+    void setSpeedMultiplier(float factor) {m_speed = baseSpeed * factor;} 
+    bool isDebuffed = false;
+    int debuffTimer = 0;
+    float debuffMultiplier = 1.0f;
+    
+    void applyDebuff(int duration, float speedMultiplier) {
+    isDebuffed = true;
+    debuffTimer = duration;
+    m_speed = baseSpeed * speedMultiplier;
+}
 
 private:
     int m_score = 0;
@@ -103,8 +118,7 @@ public:
 
 class GoldFish : public NPCreature {
 public:
-    GoldFish(float x, float y, int speed, std::shared_ptr<GameSprite> sprite)
-    : NPCreature(x, y, speed, sprite) {
+    GoldFish(float x, float y, int speed, std::shared_ptr<GameSprite> sprite): NPCreature(x, y, speed, sprite) {
         
         m_creatureType = AquariumCreatureType::GoldFish;
 
@@ -114,13 +128,20 @@ public:
 
     void move() override;
 
-    void draw() const override {
-        ofSetColor(ofColor::yellow); // make it stand out
-        m_sprite->draw(m_x, m_y);
-        ofSetColor(ofColor::white);
-    }
+    void draw() const override;
 };
 
+class LionFish : public NPCreature{
+public:
+    LionFish(float x, float y, int speed, std::shared_ptr<GameSprite> sprite): NPCreature(x, y, speed, sprite) {
+        
+        m_creatureType = AquariumCreatureType::LionFish;
+        setCollisionRadius(40);
+        m_value = 0; // does not give score, only damages
+    }
+    void move() override;
+    void draw() const override;
+};
 
 class AquariumSpriteManager {
     public:
@@ -131,6 +152,8 @@ class AquariumSpriteManager {
         std::shared_ptr<GameSprite> m_npc_fish;
         std::shared_ptr<GameSprite> m_big_fish;
         std::shared_ptr<GameSprite> m_gold_fish;
+        std::shared_ptr<GameSprite> m_gold_fish_npc;
+        std::shared_ptr<GameSprite> m_lion_fish;
 };
 
 

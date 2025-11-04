@@ -17,7 +17,9 @@ string AquariumCreatureTypeToString(AquariumCreatureType t){
 
 // PlayerCreature Implementation
 PlayerCreature::PlayerCreature(float x, float y, int speed, std::shared_ptr<GameSprite> sprite)
-: Creature(x, y, speed, 10.0f, 1, sprite) {}
+: Creature(x, y, speed, 10.0f, 1, sprite) {
+    baseSpeed = speed;
+}
 
 
 void PlayerCreature::setDirection(float dx, float dy) {
@@ -52,7 +54,7 @@ void PlayerCreature::draw() const {
         ofSetColor(ofColor::red); // Flash red if in damage debounce
     }
     if (m_sprite) {
-        m_sprite->draw(m_x, m_y);
+        m_sprite->draw(m_x- m_sprite->getWidth() / 2.0f, m_y- m_sprite->getHeight() / 2.0f);
     }
     ofSetColor(ofColor::white); // Reset color
 
@@ -77,11 +79,11 @@ void PlayerCreature::loseLife(int debounce) {
 void PlayerCreature::powerUp(std::shared_ptr<GameSprite> goldSprite) {
     isPoweredUp = true;
     powerUpTimer = 60 * 10; // 10 seconds at 60fps
-    m_sprite = goldSprite;
-    if (isPoweredUp)
-        m_speed *= 2.0f;
+    isDebuffed = false;
+    debuffTimer = 0;
 
     m_sprite = goldSprite;
+    m_speed = baseSpeed * 2.5f;
 }
 
 void PlayerCreature::updatePowerUp() {
@@ -89,11 +91,25 @@ void PlayerCreature::updatePowerUp() {
         --powerUpTimer;
         if (powerUpTimer <= 0) {
             isPoweredUp = false;
-            m_speed /= 2.0f;
-            m_sprite = std::make_shared<GameSprite>("base-fish.png", 100, 100); // revert to normal, slightly bigger
+            m_speed = baseSpeed;
+            m_sprite = std::make_shared<GameSprite>("base-fish.png", 100, 100); // revert to normal
+        }
+    }
+    
+    if (isDebuffed) {
+        --debuffTimer;
+
+        if (debuffTimer <= 0) {
+            isDebuffed = false;
+
+            if (isPoweredUp)
+                m_speed = baseSpeed * 2.5f;
+            else
+                m_speed = baseSpeed;
         }
     }
 }
+    
 // NPCreature Implementation
 NPCreature::NPCreature(float x, float y, int speed, std::shared_ptr<GameSprite> sprite)
 : Creature(x, y, speed, 30, 1, sprite) {
@@ -120,7 +136,7 @@ void NPCreature::draw() const {
     ofLogVerbose() << "NPCreature at (" << m_x << ", " << m_y << ") with speed " << m_speed << std::endl;
     ofSetColor(ofColor::white);
     if (m_sprite) {
-        m_sprite->draw(m_x, m_y);
+        m_sprite->draw(m_x- m_sprite->getWidth() / 2.0f, m_y- m_sprite->getHeight() / 2.0f);
     }
 }
 
@@ -151,11 +167,11 @@ void BiggerFish::move() {
 
 void BiggerFish::draw() const {
     ofLogVerbose() << "BiggerFish at (" << m_x << ", " << m_y << ") with speed " << m_speed << std::endl;
-    this->m_sprite->draw(this->m_x, this->m_y);
+    this->m_sprite->draw(m_x- m_sprite->getWidth() / 2.0f, m_y- m_sprite->getHeight() / 2.0f);
 }
 
 void GoldFish::move() {
-    // Gold fish might move slower or have different logic
+    // Gold fish moves faster
     m_x += m_dx * (m_speed * 1.25); // Moves at 1.25 speed
     m_y += m_dy * (m_speed * 1.25);
     if(m_dx < 0 ){
@@ -166,13 +182,35 @@ void GoldFish::move() {
 
     bounce();
 }
+void GoldFish::draw() const {
+    ofLogVerbose() << "GoldFish at (" << m_x << ", " << m_y << ") with speed " << m_speed << std::endl;
+    this->m_sprite->draw(m_x- m_sprite->getWidth() / 2.0f, m_y- m_sprite->getHeight() / 2.0f);
+}
 
+void LionFish::move() {
+    // Lion Fish moves slower
+    m_x += m_dx * (m_speed * .50); // Moves at 1.25 speed
+    m_y += m_dy * (m_speed * .50);
+    if(m_dx < 0 ){
+        this->m_sprite->setFlipped(true);
+    }else {
+        this->m_sprite->setFlipped(false);
+    }
+
+    bounce();
+}
+void LionFish::draw() const {
+    ofLogVerbose() << "LionFish at (" << m_x << ", " << m_y << ") with speed " << m_speed << std::endl;
+    this->m_sprite->draw(m_x- m_sprite->getWidth() / 2.0f, m_y- m_sprite->getHeight() / 2.0f);
+}
 
 // AquariumSpriteManager
 AquariumSpriteManager::AquariumSpriteManager(){
     this->m_npc_fish = std::make_shared<GameSprite>("base-fish.png", 70,70);
     this->m_big_fish = std::make_shared<GameSprite>("bigger-fish.png", 120, 120);
-    this->m_gold_fish = std::make_shared<GameSprite>("goldFish.png", 125, 75);
+    this->m_gold_fish = std::make_shared<GameSprite>("goldFish.png", 110, 55);
+    this->m_gold_fish_npc = std::make_shared<GameSprite>("goldFish.png", 60, 40);
+    this->m_lion_fish = std::make_shared<GameSprite>("lionFish.png",100,100);
 }
 
 std::shared_ptr<GameSprite> AquariumSpriteManager::GetSprite(AquariumCreatureType t){
@@ -184,7 +222,13 @@ std::shared_ptr<GameSprite> AquariumSpriteManager::GetSprite(AquariumCreatureTyp
             return std::make_shared<GameSprite>(*this->m_npc_fish);
 
         case AquariumCreatureType::GoldFish:
-            return std::make_shared<GameSprite>(*this->m_gold_fish, 80, 40);
+            return std::make_shared<GameSprite>(*this->m_gold_fish);
+        
+        case AquariumCreatureType::GoldFishNPC:
+            return std::make_shared<GameSprite>(*this->m_gold_fish_npc);
+
+        case AquariumCreatureType::LionFish:
+            return std::make_shared<GameSprite>(*this->m_lion_fish);
 
         default:
             return nullptr;
@@ -281,7 +325,10 @@ void Aquarium::SpawnCreature(AquariumCreatureType type) {
             this->addCreature(std::make_shared<BiggerFish>(x, y, speed, this->m_sprite_manager->GetSprite(AquariumCreatureType::BiggerFish)));
             break;
         case AquariumCreatureType::GoldFish:
-            this->addCreature(std::make_shared<GoldFish>(x, y, speed, this->m_sprite_manager->GetSprite(AquariumCreatureType::GoldFish)));
+            this->addCreature(std::make_shared<GoldFish>(x, y, speed, this->m_sprite_manager->GetSprite(AquariumCreatureType::GoldFishNPC)));
+            break;
+        case AquariumCreatureType::LionFish:
+            this->addCreature(std::make_shared<LionFish>(x, y, speed, this->m_sprite_manager->GetSprite(AquariumCreatureType::LionFish)));
             break;
         default:
             ofLogError() << "Unknown creature type to spawn!";
@@ -321,12 +368,14 @@ void Aquarium::Repopulate() {
         this->SpawnCreature(newCreatureType);
     }
     // small random chance for GoldFish to appear
-
-    // if (ofRandom(1.0f) < 0.10f) { // 10% chance for testing purposes
     if (ofRandom(1.0f) < 0.05f) { // 5% chance
         this->SpawnCreature(AquariumCreatureType::GoldFish);
     }
+    if (ofRandom(1.0f) < 0.10f) { // 10% chance
+        this->SpawnCreature(AquariumCreatureType::LionFish);
+    }
 }
+
 
 
 // Aquarium collision detection
@@ -351,6 +400,7 @@ void AquariumGameScene::Update(){
 
     if (this->updateControl.tick()) {
         auto event = DetectAquariumCollisions(this->m_aquarium, this->m_player);
+
         if (event && event->isCollisionEvent() && event->creatureB) {
             if (this->m_player->getPower() < event->creatureB->getValue()) {
                 this->m_player->loseLife(3 * 60);
@@ -375,9 +425,17 @@ void AquariumGameScene::Update(){
                 if (type == AquariumCreatureType::GoldFish) {
                     auto goldSprite = this->m_aquarium->GetSprite(AquariumCreatureType::GoldFish);
                     this->m_player->powerUp(goldSprite);
+                    this->m_aquarium->removeCreature(event->creatureB);
+                }
+                else if (type == AquariumCreatureType::LionFish) {
+                    this->m_player->applyDebuff(5 * 60, 0.5f); // 5 seconds 
+                    this->m_player->loseLife(2 * 60);
+                    this->m_player->setDirection(-this->m_player->getDx(), -this->m_player->getDy());
+                }
+                else{
+                    this->m_aquarium->removeCreature(event->creatureB);
                 }
 
-                this->m_aquarium->removeCreature(event->creatureB);
                 this->m_player->addToScore(1, event->creatureB->getValue());
                 if (this->m_player->getScore() % 25 == 0) {
                     this->m_player->increasePower(1);
@@ -386,6 +444,14 @@ void AquariumGameScene::Update(){
         }
         this->m_aquarium->update();
 
+        // Add red squares following player when debuffed
+        if (m_player->isDebuffed && ofGetFrameNum() % 3 == 0) {
+            for (int i = 0; i < 3; ++i) {
+                float offsetX = ofRandom(-15, 15);
+                float offsetY = ofRandom(-15, 15);
+                redSquares.push_back(glm::vec3(m_player->getX() + offsetX, m_player->getY() + offsetY, 30));
+            }
+        }
         // Update red square lifetimes
         for (auto& sq : redSquares) {
             sq.z -= 1; // reduce lifetime
