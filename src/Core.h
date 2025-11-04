@@ -33,6 +33,16 @@ public:
         m_flippedImage.mirror(false, true); // Mirror horizontally
     }
 
+        // Sprite was originally loaded every single time a power up was
+        // obtained, with this, it can be avoided
+    GameSprite(const GameSprite& other, int width, int height) {
+        m_image = other.m_image;              // copy already-loaded image
+        m_image.resize(width, height);        // resize to new dimensions
+        m_flippedImage = m_image;
+        m_flippedImage.mirror(false, true);
+        m_flipped = other.m_flipped;
+    }
+
     void draw(float x, float y) const {
         if (m_flipped) {
             m_flippedImage.draw(x, y);

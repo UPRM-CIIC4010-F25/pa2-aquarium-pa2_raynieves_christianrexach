@@ -9,7 +9,8 @@
 
 enum class AquariumCreatureType {
     NPCreature,
-    BiggerFish
+    BiggerFish,
+    GoldFish  //Added new type of fish
 };
 
 string AquariumCreatureTypeToString(AquariumCreatureType t);
@@ -68,12 +69,19 @@ public:
     void increasePower(int value) { m_power += value; }
     void reduceDamageDebounce();
     
+    // Goldfish stuff
+    void powerUp(std::shared_ptr<GameSprite> goldSprite);
+    void updatePowerUp();
+    bool isPoweredUp = false;
+    int powerUpTimer = 0;
+
 private:
     int m_score = 0;
     int m_lives = 3;
     int m_power = 1; // mark current power lvl
     int m_damage_debounce = 0; // frames to wait after eating
 };
+
 
 class NPCreature : public Creature {
 public:
@@ -93,6 +101,26 @@ public:
     void draw() const override;
 };
 
+class GoldFish : public NPCreature {
+public:
+    GoldFish(float x, float y, int speed, std::shared_ptr<GameSprite> sprite)
+    : NPCreature(x, y, speed, sprite) {
+        
+        m_creatureType = AquariumCreatureType::GoldFish;
+
+        setCollisionRadius(25);
+        m_value = 0; // it doesn’t increase score, it’s a power-up
+    }
+
+    void move() override;
+
+    void draw() const override {
+        ofSetColor(ofColor::yellow); // make it stand out
+        m_sprite->draw(m_x, m_y);
+        ofSetColor(ofColor::white);
+    }
+};
+
 
 class AquariumSpriteManager {
     public:
@@ -102,6 +130,7 @@ class AquariumSpriteManager {
     private:
         std::shared_ptr<GameSprite> m_npc_fish;
         std::shared_ptr<GameSprite> m_big_fish;
+        std::shared_ptr<GameSprite> m_gold_fish;
 };
 
 
@@ -123,7 +152,11 @@ public:
     int getCreatureCount() const { return m_creatures.size(); }
     int getWidth() const { return m_width; }
     int getHeight() const { return m_height; }
-
+    
+    // Sprite Shenanigans
+    std::shared_ptr<GameSprite> GetSprite(AquariumCreatureType type) {
+        return m_sprite_manager->GetSprite(type);
+    }
 
 private:
     int m_maxPopulation = 0;

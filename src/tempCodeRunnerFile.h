@@ -1,0 +1,1 @@
+#define NOMINMAX // To avoid min/max macro conflict on Windows
