@@ -50,6 +50,14 @@ public:
             m_image.draw(x, y);
         }
     }
+    // Draw Overload cus Banner wont scale properly and previous draw doesn't believe in sizes
+    void draw(float x, float y, float w, float h) const {
+    if (m_flipped) {
+        m_flippedImage.draw(x, y, w, h);
+    } else {
+        m_image.draw(x, y, w, h);
+    }
+}   
 
     int getWidth() const { return m_image.getWidth();}
     int getHeight() const { return m_image.getHeight();}
@@ -228,10 +236,14 @@ class GameIntroScene : public GameScene {
 class GameOverScene : public GameScene {
     public:
         GameOverScene(string name, std::shared_ptr<GameSprite> banner)
-        : m_name(name), m_banner(std::move(banner)){};
+        : m_name(name), m_banner(std::move(banner)){
+            gameOverFish.load("gameOverFish.png");
+            gameOverFish.resize(ofGetWindowWidth(), ofGetWindowWidth()/2);
+        };
         string GetName() override {return this->m_name;}
         void Update() override;
         void Draw() override;
+        ofImage gameOverFish;
     private:
         string m_name;
         std::shared_ptr<GameSprite> m_banner;

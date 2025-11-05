@@ -1,6 +1,6 @@
 #include "Aquarium.h"
 #include <cstdlib>
-
+PlayerCreature* g_player = nullptr;
 
 string AquariumCreatureTypeToString(AquariumCreatureType t){
     switch(t){
@@ -50,7 +50,10 @@ void PlayerCreature::update() {
 void PlayerCreature::draw() const {
     
     ofLogVerbose() << "PlayerCreature at (" << m_x << ", " << m_y << ") with speed " << m_speed << std::endl;
-    if (this->m_damage_debounce > 0) {
+    if (this->m_damage_debounce > 0 && isDebuffed) {
+        ofSetColor(ofColor::mediumVioletRed); // Flash slightly purple if in damage debounce whilst debuffed
+    }
+    else if (this->m_damage_debounce > 0) {
         ofSetColor(ofColor::red); // Flash red if in damage debounce
     }
     if (m_sprite) {
@@ -188,15 +191,22 @@ void GoldFish::draw() const {
 }
 
 void LionFish::move() {
-    // Lion Fish moves slower
-    m_x += m_dx * (m_speed * .50); // Moves at 1.25 speed
-    m_y += m_dy * (m_speed * .50);
-    if(m_dx < 0 ){
-        this->m_sprite->setFlipped(true);
-    }else {
-        this->m_sprite->setFlipped(false);
+    if (g_player) {
+        float dx = g_player->getX() - m_x;
+        float dy = g_player->getY() - m_y;
+        float len = sqrt(dx*dx + dy*dy);
+        if (len > 0) {
+            dx /= len;
+            dy /= len;
+        }
+        m_dx = dx;
+        m_dy = dy;
     }
 
+    m_x += m_dx * (m_speed * 0.8); // slightly faster than before
+    m_y += m_dy * (m_speed * 0.8);
+
+    m_sprite->setFlipped(m_dx < 0);
     bounce();
 }
 void LionFish::draw() const {
@@ -344,11 +354,11 @@ void Aquarium::SpawnCreature(AquariumCreatureType type) {
 // which will mean incrementing the buffer and pointing to a new lvl index
 void Aquarium::Repopulate() {
     ofLogVerbose("entering phase repopulation");
-    // lets make the levels circular
+
+    // lets NOT make the levels circular
     int selectedLevelIdx = this->currentLevel % this->m_aquariumlevels.size();
     ofLogVerbose() << "the current index: " << selectedLevelIdx << endl;
     std::shared_ptr<AquariumLevel> level = this->m_aquariumlevels.at(selectedLevelIdx);
-
 
     if(level->isCompleted()){
         level->levelReset();
@@ -371,7 +381,12 @@ void Aquarium::Repopulate() {
     if (ofRandom(1.0f) < 0.05f) { // 5% chance
         this->SpawnCreature(AquariumCreatureType::GoldFish);
     }
-    if (ofRandom(1.0f) < 0.10f) { // 10% chance
+
+    // Increase LionFish spawn rate based on level:
+    float lionChance = 0.05f + (this->currentLevel * 0.02f); // starts 5%, increases 2% per level
+    lionChance = std::min(lionChance, 0.60f); // cap at 60%
+
+    if (ofRandom(1.0f) < lionChance) {
         this->SpawnCreature(AquariumCreatureType::LionFish);
     }
 }
@@ -445,7 +460,7 @@ void AquariumGameScene::Update(){
         this->m_aquarium->update();
 
         // Add red squares following player when debuffed
-        if (m_player->isDebuffed && ofGetFrameNum() % 3 == 0) {
+        if (m_player->isDebuffed) {
             for (int i = 0; i < 3; ++i) {
                 float offsetX = ofRandom(-15, 15);
                 float offsetY = ofRandom(-15, 15);
@@ -465,6 +480,13 @@ void AquariumGameScene::Update(){
 
             redSquares.end()
         );
+    }
+        // Game Over update
+    if (this->m_player->getLives() <= 0) {
+
+        auto gameOverEvent = std::make_shared<GameEvent>(GameEventType::GAME_OVER, nullptr, nullptr);
+        this->SetLastEvent(gameOverEvent); // store it so ofApp can detect it
+        return; // early return to stop further updates
     }
 }
 
@@ -486,15 +508,25 @@ void AquariumGameScene::Draw() {
 
 
 void AquariumGameScene::paintAquariumHUD(){
-    float panelWidth = ofGetWindowWidth() - 150;
-    ofDrawBitmapString("Score: " + std::to_string(this->m_player->getScore()), panelWidth, 20);
-    ofDrawBitmapString("Power: " + std::to_string(this->m_player->getPower()), panelWidth, 30);
-    ofDrawBitmapString("Lives: " + std::to_string(this->m_player->getLives()), panelWidth, 40);
+
+    hudFont.load("Monaco.ttf", 32, true, true);
+    float panelHeight = ofGetWindowHeight() - 40;
+    float panelWidth = ofGetWindowWidth() - 200;
+    hudFont.drawString("Score:" + std::to_string(this->m_player->getScore()), panelWidth*0.4, panelHeight);
+    hudFont.drawString("Power:" + std::to_string(this->m_player->getPower()), panelWidth*0.70, panelHeight);
+    hudFont.drawString("Lives:", panelWidth*0.01, panelHeight);
+
     for (int i = 0; i < this->m_player->getLives(); ++i) {
         ofSetColor(ofColor::red);
-        ofDrawCircle(panelWidth + i * 20, 50, 5);
+        ofDrawCircle(panelWidth*0.01 + 180 + i * 40, panelHeight - 15, 15);
     }
-    ofSetColor(ofColor::white); // Reset color to white for other drawings
+    // Added Level Counter
+    int currentLevel = this->m_aquarium->getCurrentLevel(); 
+    ofSetColor(ofColor::white);
+    hudFont.drawString("Level:" + std::to_string(currentLevel), panelWidth, panelHeight);
+
+    ofSetColor(ofColor::white); // Reset color
+
 }
 
 void AquariumLevel::populationReset(){

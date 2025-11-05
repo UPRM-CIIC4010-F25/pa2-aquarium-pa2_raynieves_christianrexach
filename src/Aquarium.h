@@ -51,6 +51,7 @@ class PlayerCreature : public Creature {
 public:
 
     PlayerCreature(float x, float y, int speed, std::shared_ptr<GameSprite> sprite);
+    
     void move();
     void draw() const;
     void update();
@@ -175,6 +176,7 @@ public:
     int getCreatureCount() const { return m_creatures.size(); }
     int getWidth() const { return m_width; }
     int getHeight() const { return m_height; }
+    int getCurrentLevel() const { return currentLevel;}
     
     // Sprite Shenanigans
     std::shared_ptr<GameSprite> GetSprite(AquariumCreatureType type) {
@@ -200,6 +202,7 @@ class AquariumGameScene : public GameScene {
     public:
         AquariumGameScene(std::shared_ptr<PlayerCreature> player, std::shared_ptr<Aquarium> aquarium, string name)
         : m_player(std::move(player)) , m_aquarium(std::move(aquarium)), m_name(name){}
+
         std::shared_ptr<GameEvent> GetLastEvent(){return m_lastEvent;}
         void SetLastEvent(std::shared_ptr<GameEvent> event){this->m_lastEvent = event;}
         std::shared_ptr<PlayerCreature> GetPlayer(){return this->m_player;}
@@ -209,6 +212,8 @@ class AquariumGameScene : public GameScene {
         void Draw() override;
 
         std::vector<glm::vec3> redSquares; // x, y, z (lifetime)
+        ofTrueTypeFont hudFont;
+        
 
     private:
         void paintAquariumHUD();

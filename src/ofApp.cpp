@@ -63,7 +63,8 @@ void ofApp::setup(){
 
     gameManager->AddScene(std::make_shared<GameOverScene>(
         GameSceneKindToString(GameSceneKind::GAME_OVER),
-        std::make_shared<GameSprite>("game-over.png", ofGetWindowWidth(), ofGetWindowHeight())
+
+        std::make_shared<GameSprite>("game-over.png", ofGetWindowWidth()*.5, ofGetWindowHeight()*.5)
     ));
 
     ofSetLogLevel(OF_LOG_NOTICE); // Set default log level
@@ -139,17 +140,17 @@ void ofApp::keyPressed(int key){
     if(gameManager->GetActiveSceneName() == GameSceneKindToString(GameSceneKind::AQUARIUM_GAME)){
         auto gameScene = std::static_pointer_cast<AquariumGameScene>(gameManager->GetActiveScene());
         switch(key){
-            case OF_KEY_UP:
+            case 'w':
                 gameScene->GetPlayer()->setDirection(gameScene->GetPlayer()->isXDirectionActive()?gameScene->GetPlayer()->getDx():0, -1);
                 break;
-                case OF_KEY_DOWN:
+            case 's':
                 gameScene->GetPlayer()->setDirection(gameScene->GetPlayer()->isXDirectionActive()?gameScene->GetPlayer()->getDx():0, 1);
                 break;
-            case OF_KEY_LEFT:
+            case 'a':
                 gameScene->GetPlayer()->setDirection(-1, gameScene->GetPlayer()->isYDirectionActive()?gameScene->GetPlayer()->getDy():0);
                 gameScene->GetPlayer()->setFlipped(true);
                 break;
-                case OF_KEY_RIGHT:
+            case 'd':
                 gameScene->GetPlayer()->setDirection(1, gameScene->GetPlayer()->isYDirectionActive()?gameScene->GetPlayer()->getDy():0);
                 gameScene->GetPlayer()->setFlipped(false);
                 break;
@@ -185,13 +186,13 @@ void ofApp::keyPressed(int key){
 void ofApp::keyReleased(int key){
     if(gameManager->GetActiveSceneName() == GameSceneKindToString(GameSceneKind::AQUARIUM_GAME)){
         auto gameScene = std::static_pointer_cast<AquariumGameScene>(gameManager->GetActiveScene());
-    if( key == OF_KEY_UP || key == OF_KEY_DOWN){
+    if( key == 'w' || key == 's'){
         gameScene->GetPlayer()->setDirection(gameScene->GetPlayer()->isXDirectionActive()?gameScene->GetPlayer()->getDx():0, 0);
         gameScene->GetPlayer()->move();
         return;
     }
     
-    if(key == OF_KEY_LEFT || key == OF_KEY_RIGHT){
+    if(key == 'a' || key == 'd'){
         gameScene->GetPlayer()->setDirection(0, gameScene->GetPlayer()->isYDirectionActive()?gameScene->GetPlayer()->getDy():0);
         gameScene->GetPlayer()->move();
         return;

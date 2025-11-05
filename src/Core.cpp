@@ -147,7 +147,10 @@ void GameOverScene::Update(){
 }
 
 void GameOverScene::Draw(){
+
     ofBackgroundGradient(ofColor::red, ofColor::black);
-    this->m_banner->draw(0,0);
+    ofSetColor(255); 
+    gameOverFish.draw(ofGetWidth()*.20, ofGetWidth()*.45, ofGetWidth()*.60, ofGetWidth()*.30);
+    this->m_banner->draw(0, -ofGetWidth()/4, ofGetWidth(), ofGetWidth());
 
 }
