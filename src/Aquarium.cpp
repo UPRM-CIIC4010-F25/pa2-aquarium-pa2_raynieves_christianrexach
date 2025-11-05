@@ -364,7 +364,7 @@ void Aquarium::Repopulate() {
         level->levelReset();
         this->currentLevel += 1;
         selectedLevelIdx = this->currentLevel % this->m_aquariumlevels.size();
-        ofLogNotice()<<"new level reached : " << selectedLevelIdx << std::endl;
+        ofLogNotice()<<"new level reached : " + std::to_string(currentLevel) << std::endl;
         level = this->m_aquariumlevels.at(selectedLevelIdx);
         this->clearCreatures();
     }
@@ -378,13 +378,13 @@ void Aquarium::Repopulate() {
         this->SpawnCreature(newCreatureType);
     }
     // small random chance for GoldFish to appear
-    if (ofRandom(1.0f) < 0.05f) { // 5% chance
+    if (ofRandom(1.0f) < 0.02f) { // 2% chance for them to appear
         this->SpawnCreature(AquariumCreatureType::GoldFish);
     }
 
     // Increase LionFish spawn rate based on level:
-    float lionChance = 0.05f + (this->currentLevel * 0.02f); // starts 5%, increases 2% per level
-    lionChance = std::min(lionChance, 0.60f); // cap at 60%
+    float lionChance = 0.05f + (this->currentLevel * 0.02f); // starts 5%, increases 5% per level
+    lionChance = std::min(lionChance, 0.50f); // cap at 50% (level 10)
 
     if (ofRandom(1.0f) < lionChance) {
         this->SpawnCreature(AquariumCreatureType::LionFish);
@@ -436,11 +436,15 @@ void AquariumGameScene::Update(){
 
                 AquariumCreatureType type = std::static_pointer_cast<NPCreature>(event->creatureB)->GetType();
 
-                // --- special case: GoldFish gives power-up ---
+                // special case: GoldFish gives power-up and +1 life
                 if (type == AquariumCreatureType::GoldFish) {
                     auto goldSprite = this->m_aquarium->GetSprite(AquariumCreatureType::GoldFish);
                     this->m_player->powerUp(goldSprite);
-                    this->m_aquarium->removeCreature(event->creatureB);
+                    this->m_aquarium->removeCreature(event->creatureB); 
+                    if (this->m_player->getLives() < 3) {
+                        this->m_player->setLives(this->m_player->getLives()+1);
+                        ofLogNotice() << "Player gained a life! Lives remaining: " << this->m_player->getLives() << std::endl;
+                    }
                 }
                 else if (type == AquariumCreatureType::LionFish) {
                     this->m_player->applyDebuff(5 * 60, 0.5f); // 5 seconds 

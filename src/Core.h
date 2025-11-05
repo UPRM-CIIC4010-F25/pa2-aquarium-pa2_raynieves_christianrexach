@@ -37,10 +37,10 @@ public:
         // obtained, with this, it can be avoided
     GameSprite(const GameSprite& other, int width, int height) {
         m_image = other.m_image;              // copy already-loaded image
-        m_image.resize(width, height);        // resize to new dimensions
+        m_image.resize(width, height);        // resize to new dimensions      
         m_flippedImage = m_image;
         m_flippedImage.mirror(false, true);
-        m_flipped = other.m_flipped;
+        m_flipped = other.m_flipped;  
     }
 
     void draw(float x, float y) const {
@@ -128,22 +128,22 @@ public:
     }
 
     void bounceFrom(std::shared_ptr<Creature> other) {
-    if (!other) return;
-    float dx = m_x - other->getX();
-    float dy = m_y - other->getY();
-    float length = std::sqrt(dx*dx + dy*dy);
-    if (length == 0) length = 1; 
-    dx /= length;
-    dy /= length;
+        if (!other) return;
+        float dx = m_x - other->getX();
+        float dy = m_y - other->getY();
+        float length = std::sqrt(dx*dx + dy*dy);
+        if (length == 0) length = 1; 
+        dx /= length;
+        dy /= length;
 
-    m_x += dx * m_speed;
-    m_y += dy * m_speed;
+        m_x += dx * m_speed;
+        m_y += dy * m_speed;
 
-    m_dx = dx;
-    m_dy = dy;
+        m_dx = dx;
+        m_dy = dy;
 
-    bounce(); 
-}
+        bounce(); 
+    }
 
     
 };

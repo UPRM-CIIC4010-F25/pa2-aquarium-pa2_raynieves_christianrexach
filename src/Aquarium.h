@@ -178,7 +178,7 @@ public:
     int getHeight() const { return m_height; }
     int getCurrentLevel() const { return currentLevel;}
     
-    // Sprite Shenanigans
+    // Sprite Shennanigans (I need this getter inside Aquarium)
     std::shared_ptr<GameSprite> GetSprite(AquariumCreatureType type) {
         return m_sprite_manager->GetSprite(type);
     }
@@ -211,7 +211,7 @@ class AquariumGameScene : public GameScene {
         void Update() override;
         void Draw() override;
 
-        std::vector<glm::vec3> redSquares; // x, y, z (lifetime)
+        std::vector<glm::vec3> redSquares; // REMEMBER: x, y, z = (lifetime)
         ofTrueTypeFont hudFont;
         
 
