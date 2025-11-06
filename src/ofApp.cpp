@@ -20,7 +20,7 @@ void ofApp::setup(){
 
     std::shared_ptr<Aquarium> myAquarium;
     std::shared_ptr<PlayerCreature> player;
-
+    
     // make the game scene manager 
     gameManager = std::make_unique<GameSceneManager>();
 
@@ -36,18 +36,18 @@ void ofApp::setup(){
 
     // Lets setup the aquarium
     myAquarium = std::make_shared<Aquarium>(ofGetWindowWidth(), ofGetWindowHeight(), spriteManager);
-    
     // Create a distinct, larger player sprite
     auto playerSprite = std::make_shared<GameSprite>("base-fish.png", 100, 100); // bigger size
 
     player = std::make_shared<PlayerCreature>(ofGetWindowWidth()/2 - 50, ofGetWindowHeight()/2 - 50, DEFAULT_SPEED, playerSprite);
     player->setDirection(0, 0); // Initially stationary
     player->setBounds(ofGetWindowWidth() - 20, ofGetWindowHeight() - 20);
+    myAquarium->setPlayer(player);
 
-
-    myAquarium->addAquariumLevel(std::make_shared<Level_0>(0, 10));
-    myAquarium->addAquariumLevel(std::make_shared<Level_1>(1, 15));
-    myAquarium->addAquariumLevel(std::make_shared<Level_2>(2, 20));
+    if (myAquarium->getCurrentLevel()<5)
+        myAquarium->addAquariumLevel(std::make_shared<Level_0>(myAquarium->getCurrentLevel(), player->getScore()+(5+(myAquarium->getCurrentLevel())*5)));
+    else
+        myAquarium->addAquariumLevel(std::make_shared<Level_0>(myAquarium->getCurrentLevel(), player->getScore()+(5+(myAquarium->getCurrentLevel())*6)));
     myAquarium->Repopulate(); // initial population
 
     // now that we are mostly set, lets pass the player and the aquarium downstream

@@ -25,7 +25,7 @@ Grading
 | Student Number | Student Name | Student Email |
 |-|-|-|
 |(841-23-5391)| (Christian Gabriel Rexach Pazos)| (christian.rexach@upr.edu) |
-|(841-23-####)| (Ray Alexander Nieves Betancourt)| (ray.nieves@upr.edu) |
+|(841-23-5840)| (Ray Alexander Nieves Betancourt)| (ray.nieves@upr.edu) |
 
 ---
 
@@ -36,4 +36,20 @@ You MUST put you & your partner's information in this README file otherwise ther
 If a partner has no commits in the repositories, they will receive a 0.
 
 # Student Notes
-If you have any bonus specs, bonus or any details the TA's should know, you should include it here:
+
+Additions
+1. Added Boundry Box, Intro music that leads into a looping section of the song, added docs folder under bin, added collision and/or collision effects (little red squares) for both npc-player collisions and npc-npc collisions
+2. Created Goldfish, a power up that rarely spawn which will make you faster, speeding up the completion of the current level.
+3. Created LionFish, a defbuff that slows down the player. The lionFish is immortal and can never be eaten. 
+4. Added a Debuff visual Effect
+5. Created a Dynamic Level system that gradually increases the amount of lionfishes, the main obstacle. 
+6. Refactores Population Logic
+
+Last minute aditional features:
+1. Made Goldfish give an extra life (max 3)
+2. Added dead fish sprite at game over
+3. Completly redisigned how fish are spawned, which took way too much work, however it is all handled by level 0
+
+Considerations
+1. This project was made completly by myself (involuntarily i might add), even the little my partner did before withdrawing from the course had to be fixed by me later on
+2. I spent the last 4 days of the proyect rushing to complete all of my partners parts in addition to mine whilst also taking 2 advanced math exams and completing 2 lab reports... i didnt sleep much...

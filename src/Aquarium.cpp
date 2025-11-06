@@ -1,6 +1,5 @@
 #include "Aquarium.h"
 #include <cstdlib>
-PlayerCreature* g_player = nullptr;
 
 string AquariumCreatureTypeToString(AquariumCreatureType t){
     switch(t){
@@ -191,22 +190,15 @@ void GoldFish::draw() const {
 }
 
 void LionFish::move() {
-    if (g_player) {
-        float dx = g_player->getX() - m_x;
-        float dy = g_player->getY() - m_y;
-        float len = sqrt(dx*dx + dy*dy);
-        if (len > 0) {
-            dx /= len;
-            dy /= len;
-        }
-        m_dx = dx;
-        m_dy = dy;
+    // Lion fish moves faster
+    m_x += m_dx * (m_speed * 0.5); // Moves at .5 speed
+    m_y += m_dy * (m_speed * 0.5);
+    if(m_dx < 0 ){
+        this->m_sprite->setFlipped(true);
+    }else {
+        this->m_sprite->setFlipped(false);
     }
 
-    m_x += m_dx * (m_speed * 0.8); // slightly faster than before
-    m_y += m_dy * (m_speed * 0.8);
-
-    m_sprite->setFlipped(m_dx < 0);
     bounce();
 }
 void LionFish::draw() const {
@@ -269,7 +261,7 @@ void Aquarium::update() {
         creature->move();
     }
 
-    //NPC Collision//
+    //NPC Collision
 
     for (size_t i = 0; i < m_creatures.size(); ++i) {
         auto npc1 = m_creatures[i];
@@ -347,6 +339,13 @@ void Aquarium::SpawnCreature(AquariumCreatureType type) {
 
 }
 
+// Making the new setplayer and getplayer for score
+void Aquarium::setPlayer(std::shared_ptr<PlayerCreature> player) {
+    this->m_player = player;
+}
+std::shared_ptr<PlayerCreature> Aquarium::getPlayer() const {
+    return this->m_player;
+}
 
 // repopulation will be called from the levl class
 // it will compose into aquarium so eating eats frm the pool of NPCs in the lvl class
@@ -361,12 +360,23 @@ void Aquarium::Repopulate() {
     std::shared_ptr<AquariumLevel> level = this->m_aquariumlevels.at(selectedLevelIdx);
 
     if(level->isCompleted()){
-        level->levelReset();
+        level->levelReset(this->m_player->getScore(),this->currentLevel);
         this->currentLevel += 1;
         selectedLevelIdx = this->currentLevel % this->m_aquariumlevels.size();
         ofLogNotice()<<"new level reached : " + std::to_string(currentLevel) << std::endl;
         level = this->m_aquariumlevels.at(selectedLevelIdx);
         this->clearCreatures();
+        if (this->currentLevel < 5) {
+            this->addAquariumLevel(std::make_shared<Level_0>(
+                this->currentLevel, 
+                this->m_player->getScore() + (5 + this->currentLevel * 5)
+            ));
+        } else {
+            this->addAquariumLevel(std::make_shared<Level_0>(
+                this->currentLevel,
+                this->m_player->getScore() + (5 + this->currentLevel * 6)
+            ));
+        }
     }
 
     
@@ -374,6 +384,7 @@ void Aquarium::Repopulate() {
     std::vector<AquariumCreatureType> toRespawn = level->Repopulate();
     ofLogVerbose() << "amount to repopulate : " << toRespawn.size() << endl;
     if(toRespawn.size() <= 0 ){return;} // there is nothing for me to do here
+
     for(AquariumCreatureType newCreatureType : toRespawn){
         this->SpawnCreature(newCreatureType);
     }
@@ -381,14 +392,16 @@ void Aquarium::Repopulate() {
     if (ofRandom(1.0f) < 0.02f) { // 2% chance for them to appear
         this->SpawnCreature(AquariumCreatureType::GoldFish);
     }
-
-    // Increase LionFish spawn rate based on level:
-    float lionChance = 0.05f + (this->currentLevel * 0.02f); // starts 5%, increases 5% per level
-    lionChance = std::min(lionChance, 0.50f); // cap at 50% (level 10)
-
-    if (ofRandom(1.0f) < lionChance) {
-        this->SpawnCreature(AquariumCreatureType::LionFish);
+    if (currentLevel>=5 && ofRandom(1.0f) < 0.10f){ //10% chance
+        this->SpawnCreature(AquariumCreatureType::BiggerFish);
     }
+    // Increase LionFish spawn rate based on level:
+    // float lionChance = 0.05f + (this->currentLevel * 0.02f); // starts 5%, increases 5% per level
+    // lionChance = std::min(lionChance, 0.50f); // cap at 50% (level 10)
+
+    // if (ofRandom(1.0f) < lionChance) {
+    //     this->SpawnCreature(AquariumCreatureType::LionFish);
+    // }
 }
 
 
@@ -517,7 +530,7 @@ void AquariumGameScene::paintAquariumHUD(){
     float panelHeight = ofGetWindowHeight() - 40;
     float panelWidth = ofGetWindowWidth() - 200;
     hudFont.drawString("Score:" + std::to_string(this->m_player->getScore()), panelWidth*0.4, panelHeight);
-    hudFont.drawString("Power:" + std::to_string(this->m_player->getPower()), panelWidth*0.70, panelHeight);
+    hudFont.drawString("Power:" + std::to_string(this->m_player->getPower()), panelWidth*0.71, panelHeight);
     hudFont.drawString("Lives:", panelWidth*0.01, panelHeight);
 
     for (int i = 0; i < this->m_player->getLives(); ++i) {
@@ -527,7 +540,7 @@ void AquariumGameScene::paintAquariumHUD(){
     // Added Level Counter
     int currentLevel = this->m_aquarium->getCurrentLevel(); 
     ofSetColor(ofColor::white);
-    hudFont.drawString("Level:" + std::to_string(currentLevel), panelWidth, panelHeight);
+    hudFont.drawString("Level:" + std::to_string(currentLevel), panelWidth-20, panelHeight);
 
     ofSetColor(ofColor::white); // Reset color
 
@@ -559,45 +572,13 @@ bool AquariumLevel::isCompleted(){
     return this->m_level_score >= this->m_targetScore;
 }
 
-
-
-
-std::vector<AquariumCreatureType> Level_0::Repopulate() {
+std::vector<AquariumCreatureType> AquariumLevel::Repopulate(){
     std::vector<AquariumCreatureType> toRepopulate;
     for(std::shared_ptr<AquariumLevelPopulationNode> node : this->m_levelPopulation){
         int delta = node->population - node->currentPopulation;
         ofLogVerbose() << "to Repopulate :  " << delta << endl;
         if(delta >0){
             for(int i = 0; i<delta; i++){
-                toRepopulate.push_back(node->creatureType);
-            }
-            node->currentPopulation += delta;
-        }
-    }
-    return toRepopulate;
-
-}
-
-std::vector<AquariumCreatureType> Level_1::Repopulate() {
-    std::vector<AquariumCreatureType> toRepopulate;
-    for(std::shared_ptr<AquariumLevelPopulationNode> node : this->m_levelPopulation){
-        int delta = node->population - node->currentPopulation;
-        if(delta >0){
-            for(int i=0; i<delta; i++){
-                toRepopulate.push_back(node->creatureType);
-            }
-            node->currentPopulation += delta;
-        }
-    }
-    return toRepopulate;
-}
-
-std::vector<AquariumCreatureType> Level_2::Repopulate() {
-    std::vector<AquariumCreatureType> toRepopulate;
-    for(std::shared_ptr<AquariumLevelPopulationNode> node : this->m_levelPopulation){
-        int delta = node->population - node->currentPopulation;
-        if(delta >0){
-            for(int i=0; i<delta; i++){
                 toRepopulate.push_back(node->creatureType);
             }
             node->currentPopulation += delta;
